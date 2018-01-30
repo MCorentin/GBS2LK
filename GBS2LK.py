@@ -49,7 +49,7 @@ def get_value_or_default(fieldName, default):
 # ===============================================================
 parser = argparse.ArgumentParser(description = 'From GBS to Linkage Map')
 parser.add_argument("-c","--config_file",help="The config file containing all the parameters to use for the pipeline (must be in 'ini' format)")
-parser.add_argument("-t", "--tassel_path",help="Path to tassel 'run_pipeline.pl' (eg /usr/bin/tassel-5-standalone/)")
+parser.add_argument("-t", "--tassel_path",help="Path to tassel 'run_pipeline.pl' (eg /usr/bin/tassel-5-standalone/run_pipeline.pl)")
 parser.add_argument("-rp","--run_pipeline",help="Run tassel and MSTMap",action="store_true")
 parser.add_argument("-rt","--run_tassel",help="Run tassel only",action="store_true")
 
@@ -76,7 +76,7 @@ else:
 	print("--tassel_path argument is required ! Current value: %s" % args.tassel_path)
 	print(USAGE)
 	sys.exit()
-check_file(tassel_path+"run_pipeline.pl", "--tassel_path")
+check_file(tasselPath, "--tassel_path")
 
 
 # nbRun is here to check that the user only chose one "--run" method
@@ -108,22 +108,20 @@ cfgValues = {}
 configParser.read(configFileName)
 tasselConfig = configParser['tassel']
 
-cfgValues['prefix'] = get_value_or_default('prefix', "GBS2LK_")
-
 cfgValues['inputdir'] = tasselConfig.get('inputdir', None)
 check_dir(cfgValues['inputdir'], "inputdir")
 
-cfgValues['keyFileName'] = tasselConfig.get('keyfile', None)
-check_file(cfgValues['keyFileName'], "keyfile")
+cfgValues['keyfile'] = tasselConfig.get('keyfile', None)
+check_file(cfgValues['keyfile'], "keyfile")
 
 # Check list of enzymes ? (what if new one appear ?)
 cfgValues['enzyme'] = tasselConfig.get('enzyme', None)
 
-# Deal with all the optional 'int' fields in the config file
-listFields = ('minkmercount', 'minQS', 'kmerlength', 'minkmerlength', 'maxkmernum' ,'batchsize', 'Xmx')
-listDefaults = (10, 0, 64, 20, 50000000, 8, 10)
+# Deal with all the optional fields in the config file
+listFields = ('prefix', 'minkmercount', 'minqs', 'kmerlength', 'minkmerlength', 'maxkmernum' ,'batchsize', 'xmx')
+listDefaults = ('GBS2LK_', '10', '0', '64', '20', '50000000', '8', '10G')
 for (f, d) in zip(listFields, listDefaults):
-	cfgValues[f] = int(get_value_or_default(f, d))
+	cfgValues[f] = get_value_or_default(f, d)
 
 print("\n")
 print("Values for the pipeline: ")

@@ -1,9 +1,9 @@
 # DB name = cfgValues['prefix'] + "Tags.db"
 
 def run_GBSSeqToTagDBPlugin(cfgValues, tasselPath):
-	cmd = tasselPath+"run_pipeline.pl -Xmx"+cfgValues['Xmx']+"G -GBSSeqToTagDBPlugin" + \
+	cmd = tasselPath + " -Xmx"+cfgValues['xmx']+" -GBSSeqToTagDBPlugin" + \
 		  "	-e " + cfgValues['enzyme'] + \
-		  " -i " + cfgValues['inputDir'] + \
+		  " -i " + cfgValues['inputdir'] + \
 		  " -db " + cfgValues['prefix'] + "Tags.db" + \
 		  " -k " + cfgValues['keyfile'] + \
 		  " -c " + cfgValues['minkmercount'] + \
@@ -14,7 +14,10 @@ def run_GBSSeqToTagDBPlugin(cfgValues, tasselPath):
 		  "-batchSize " + cfgValues['batchsize'] + \
 		  " -deleteOldData " + \
 		  " -endPlugin"
+		  
+	print('\n')
 	print(cmd)
+	print('\n')
 
 
 def run_tassel(cfgValues, tasselPath):
