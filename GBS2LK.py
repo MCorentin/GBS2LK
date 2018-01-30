@@ -6,7 +6,6 @@ import sys
 import argparse
 import os
 
-
 # ===============================================================
 # 					Define the functions
 # ===============================================================
@@ -19,18 +18,18 @@ def message_and_quit(message):
 # "field" is here to tell the user which field or agument failed
 def check_file(fileName, field):
 	if fileName is None:
-		message_and_quit("%s is set to None !\n" % field)
+		message_and_quit("%s is set to None !" % field)
 	if not os.access(fileName, os.R_OK):
-		message_and_quit("For field '%s': '%s' is not a file or is not readable !\n" % (field, repr(fileName)))
+		message_and_quit("For field '%s': '%s' is not a file or is not readable !" % (field, repr(fileName)))
 
 # This function check if "dirName" is a directory
 # If not: print a message and exit
 # "field" is here to tell the user which field or agument failed
 def check_dir(dirName, field):
 	if dirName is None:
-		message_and_quit("%s is set to None !\n" % field)
+		message_and_quit("%s is set to None !" % field)
 	if not os.path.isdir(dirName):
-		message_and_quit("For field '%s': '%s' is not a directory !\n" % (field, repr(dirName)))
+		message_and_quit("For field '%s': '%s' is not a directory !" % (field, repr(dirName)))
 
 # This method is used to deal with the optional fields in the "config.ini" file
 # If a value is in the config file, it returns the value, or else, it returns the default value
@@ -40,14 +39,14 @@ def get_value_or_default(fieldName, default):
 	value = tasselConfig.get(fieldName, None)
 	if value == None:
 		value = default
-		print("No %s found, defaulting to '%s' ...\n" % (fieldName, default))
+		print("No %s found, defaulting to '%s' ..." % (fieldName, default))
 	return value
 
 # ===============================================================
 # 					Parsing the arguments
 # ===============================================================
 parser = argparse.ArgumentParser(description = 'From GBS to Linkage Map')
-parser.add_argument("-c","--config_file",help="The config file containing all the parameters to use for the pipeline")
+parser.add_argument("-c","--config_file",help="The config file containing all the parameters to use for the pipeline (must be in 'ini' format)")
 parser.add_argument("-p","--run_pipeline",help="Run tassel and MSTMap",action="store_true")
 parser.add_argument("-t","--run_tassel",help="Run tassel only",action="store_true")
 
@@ -76,10 +75,10 @@ if args.run_tassel:
 	runMode = "TASSEL"
 	nbRun = nbRun + 1
 if nbRun > 1:
-	print("Several --run_* arguments detected ! Choose only 1\n")
+	print("Too many (%i) --run_* arguments detected ! Choose exactly one" % nbRun)
 	sys.exit()
 if nbRun < 1:
-	print("No --run_* arguments detected ! Choose only 1\n")
+	print("No --run_* arguments detected ! Choose exactly one")
 	sys.exit()
 
 
@@ -87,22 +86,33 @@ if nbRun < 1:
 # ===============================================================
 # 					Parsing the config file
 # ===============================================================
+
+# cfgValues is a dictionary to to store all the values of the config file
+cfgValues = {}
+
+# confiparser library is used to read the .ini file
 configParser.read(configFileName)
 tasselConfig = configParser['tassel']
 
-prefix = get_value_or_default('prefix', "GBS2LK_")
+cfgValues['prefix'] = get_value_or_default('prefix', "GBS2LK_")
 
-inputDirName = tasselConfig.get('inputdir', None)
-check_dir(inputDirName, "inputdir")
+cfgValues['inputdir'] = tasselConfig.get('inputdir', None)
+check_dir(cfgValues['inputdir'], "inputdir")
 
-keyFileName = tasselConfig.get('keyfile', None)
-check_file(keyFileName, "keyfile")
+cfgValues['keyFileName'] = tasselConfig.get('keyfile', None)
+check_file(cfgValues['keyFileName'], "keyfile")
 
-enzyme = tasselConfig.get('enzyme', None)
+# Check list of enzymes ? (what if new one appear ?)
+cfgValues['enzyme'] = tasselConfig.get('enzyme', None)
 
-minkmercount = int(get_value_or_default('minkmercount', 10))
-minQS = int(get_value_or_default('minQS', 0))
-kmerLength = int(get_value_or_default('kmerlength', 64))
-minkmerlength = int(get_value_or_default('minkmerlength', 20))
-maxkmernum = int(get_value_or_default('maxkmernum', 50000000))
-batchsize = int(get_value_or_default('batchsize', 8))
+# Deal with all the optional 'int' fields in the config file
+listFields = ('minkmercount', 'minQS', 'kmerlength', 'minkmerlength', 'maxkmernum' ,'batchsize')
+listDefaults = (10, 0, 64, 20, 50000000, 8)
+for (f, d) in zip(listFields, listDefaults):
+	cfgValues[f] = int(get_value_or_default(f, d))
+
+print("\n")
+print("Values for the pipeline: ")
+for keys,values in cfgValues.items():
+	print(str(keys) + ": " + str(values))
+
