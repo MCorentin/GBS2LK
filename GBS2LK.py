@@ -6,6 +6,8 @@ import sys
 import argparse
 import os
 
+import run_tassel
+
 # ===============================================================
 # 					Define the functions
 # ===============================================================
@@ -47,8 +49,9 @@ def get_value_or_default(fieldName, default):
 # ===============================================================
 parser = argparse.ArgumentParser(description = 'From GBS to Linkage Map')
 parser.add_argument("-c","--config_file",help="The config file containing all the parameters to use for the pipeline (must be in 'ini' format)")
-parser.add_argument("-p","--run_pipeline",help="Run tassel and MSTMap",action="store_true")
-parser.add_argument("-t","--run_tassel",help="Run tassel only",action="store_true")
+parser.add_argument("-t", "--tassel_path",help="Path to tassel 'run_pipeline.pl' (eg /usr/bin/tassel-5-standalone/)")
+parser.add_argument("-rp","--run_pipeline",help="Run tassel and MSTMap",action="store_true")
+parser.add_argument("-rt","--run_tassel",help="Run tassel only",action="store_true")
 
 USAGE = parser.format_usage()
 args = parser.parse_args()
@@ -64,6 +67,17 @@ else:
 	print(USAGE)
 	sys.exit()
 check_file(configFileName, "--configFile")
+
+
+# Check path to tassel 'run_pipeline.pl'
+if args.tassel_path:
+	tasselPath = args.tassel_path
+else:
+	print("--tassel_path argument is required ! Current value: %s" % args.tassel_path)
+	print(USAGE)
+	sys.exit()
+check_file(tassel_path+"run_pipeline.pl", "--tassel_path")
+
 
 # nbRun is here to check that the user only chose one "--run" method
 runMode = ""
@@ -106,8 +120,8 @@ check_file(cfgValues['keyFileName'], "keyfile")
 cfgValues['enzyme'] = tasselConfig.get('enzyme', None)
 
 # Deal with all the optional 'int' fields in the config file
-listFields = ('minkmercount', 'minQS', 'kmerlength', 'minkmerlength', 'maxkmernum' ,'batchsize')
-listDefaults = (10, 0, 64, 20, 50000000, 8)
+listFields = ('minkmercount', 'minQS', 'kmerlength', 'minkmerlength', 'maxkmernum' ,'batchsize', 'Xmx')
+listDefaults = (10, 0, 64, 20, 50000000, 8, 10)
 for (f, d) in zip(listFields, listDefaults):
 	cfgValues[f] = int(get_value_or_default(f, d))
 
@@ -116,3 +130,13 @@ print("Values for the pipeline: ")
 for keys,values in cfgValues.items():
 	print(str(keys) + ": " + str(values))
 
+	
+# ===============================================================
+# 					Launching the pipeline
+# ===============================================================
+if runMode == "PIPELINE":
+	run_tassel.run_pipeline(cfgValues, tasselPath)
+elif runMode == "TASSEL":
+	print("placeholder tassel")
+else:
+	print("Error ! runMode: %s not valid !" % runMode)
