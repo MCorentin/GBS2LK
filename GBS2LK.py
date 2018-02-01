@@ -50,6 +50,7 @@ def get_value_or_default(fieldName, default):
 parser = argparse.ArgumentParser(description = 'From GBS to Linkage Map')
 parser.add_argument("-c","--config_file",help="The config file containing all the parameters to use for the pipeline (must be in 'ini' format)")
 parser.add_argument("-t", "--tassel_path",help="Path to tassel 'run_pipeline.pl' (eg /usr/bin/tassel-5-standalone/run_pipeline.pl)")
+parser.add_argument("-b", "--bowtie2_path",help="Path to bowtie2 (eg /usr/bin/bowtie2)")
 parser.add_argument("-rp","--run_pipeline",help="Run tassel and MSTMap",action="store_true")
 parser.add_argument("-rt","--run_tassel",help="Run tassel only",action="store_true")
 
@@ -79,6 +80,16 @@ else:
 check_file(tasselPath, "--tassel_path")
 
 
+# Check path to bowtie2 
+if args.bowtie2_path:
+	bowtie2Path = args.bowtie2_path
+else:
+	print("--bowtie2_path argument is required ! Current value: %s" % args.bowtie2_path)
+	print(USAGE)
+	sys.exit()
+check_dir(bowtie2Path, "--bowtie2_path")
+
+
 # nbRun is here to check that the user only chose one "--run" method
 runMode = ""
 nbRun = 0
@@ -100,6 +111,8 @@ if nbRun < 1:
 # ===============================================================
 # 					Parsing the config file
 # ===============================================================
+
+print("Reading the config file: '%s'" % configFileName)
 
 # cfgValues is a dictionary to to store all the values of the config file
 cfgValues = {}
@@ -123,17 +136,16 @@ listDefaults = ('GBS2LK_', '10', '0', '64', '20', '50000000', '8', '10G')
 for (f, d) in zip(listFields, listDefaults):
 	cfgValues[f] = get_value_or_default(f, d)
 
-print("\n")
-print("Values for the pipeline: ")
+print("\nValues for the pipeline: ")
 for keys,values in cfgValues.items():
 	print(str(keys) + ": " + str(values))
-
+print("\n")
 	
 # ===============================================================
 # 					Launching the pipeline
 # ===============================================================
 if runMode == "PIPELINE":
-	run_tassel.run_pipeline(cfgValues, tasselPath)
+	run_tassel.run_pipeline(cfgValues, tasselPath, bowtie2Path)
 elif runMode == "TASSEL":
 	print("placeholder tassel")
 else:
