@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 
 import configparser
-import subprocess
 import sys
 import argparse
 import os
 
-import run_tassel
+import tassel_pipeline
 
 # ===============================================================
 # 					Define the functions
@@ -44,13 +43,12 @@ def get_value_or_default(fieldName, default):
 		print("No %s found, defaulting to '%s' ..." % (fieldName, default))
 	return value
 
+	
 # ===============================================================
 # 					Parsing the arguments
 # ===============================================================
 parser = argparse.ArgumentParser(description = 'From GBS to Linkage Map')
-parser.add_argument("-c","--config_file",help="The config file containing all the parameters to use for the pipeline (must be in 'ini' format)")
-parser.add_argument("-t", "--tassel_path",help="Path to tassel 'run_pipeline.pl' (eg /usr/bin/tassel-5-standalone/run_pipeline.pl)")
-parser.add_argument("-b", "--bowtie2_path",help="Path to bowtie2 (eg /usr/bin/bowtie2)")
+parser.add_argument("-c","--config_file",help="The configuration file containing all the parameters to use for the pipeline (must be in 'ini' format)")
 parser.add_argument("-rp","--run_pipeline",help="Run tassel and MSTMap",action="store_true")
 parser.add_argument("-rt","--run_tassel",help="Run tassel only",action="store_true")
 
@@ -69,27 +67,6 @@ else:
 	sys.exit()
 check_file(configFileName, "--configFile")
 
-
-# Check path to tassel 'run_pipeline.pl'
-if args.tassel_path:
-	tasselPath = args.tassel_path
-else:
-	print("--tassel_path argument is required ! Current value: %s" % args.tassel_path)
-	print(USAGE)
-	sys.exit()
-check_file(tasselPath, "--tassel_path")
-
-
-# Check path to bowtie2 
-if args.bowtie2_path:
-	bowtie2Path = args.bowtie2_path
-else:
-	print("--bowtie2_path argument is required ! Current value: %s" % args.bowtie2_path)
-	print(USAGE)
-	sys.exit()
-check_dir(bowtie2Path, "--bowtie2_path")
-
-
 # nbRun is here to check that the user only chose one "--run" method
 runMode = ""
 nbRun = 0
@@ -101,9 +78,11 @@ if args.run_tassel:
 	nbRun = nbRun + 1
 if nbRun > 1:
 	print("Too many (%i) --run_* arguments detected ! Choose exactly one" % nbRun)
+	print(USAGE)
 	sys.exit()
 if nbRun < 1:
 	print("No --run_* arguments detected ! Choose exactly one")
+	print(USAGE)
 	sys.exit()
 
 
@@ -111,42 +90,91 @@ if nbRun < 1:
 # ===============================================================
 # 					Parsing the config file
 # ===============================================================
-
+print("\n=============================================")
 print("Reading the config file: '%s'" % configFileName)
-
-# cfgValues is a dictionary to to store all the values of the config file
-cfgValues = {}
-
-# confiparser library is used to read the .ini file
+print("=============================================")
 configParser.read(configFileName)
+
+#----------------------
+# tassel Configuration
+#----------------------
+# tasselValues is a dictionary to to store all the values of the config file
+tasselValues = {}
+
+# configParser library is used to read the .ini file
 tasselConfig = configParser['tassel']
 
-cfgValues['inputdir'] = tasselConfig.get('inputdir', None)
-check_dir(cfgValues['inputdir'], "inputdir")
+tasselValues['tasselpath'] = tasselConfig.get('tasselpath', None)
+check_file(tasselValues['tasselpath'], "run_pipeline.pl")
 
-cfgValues['keyfile'] = tasselConfig.get('keyfile', None)
-check_file(cfgValues['keyfile'], "keyfile")
+# Tassel Config
+tasselValues['inputdir'] = tasselConfig.get('inputdir', None)
+check_dir(tasselValues['inputdir'], "inputdir")
+
+tasselValues['keyfile'] = tasselConfig.get('keyfile', None)
+check_file(tasselValues['keyfile'], "keyfile")
 
 # Check list of enzymes ? (what if new one appear ?)
-cfgValues['enzyme'] = tasselConfig.get('enzyme', None)
+tasselValues['enzyme'] = tasselConfig.get('enzyme', None)
 
 # Deal with all the optional fields in the config file
 listFields = ('prefix', 'minkmercount', 'minqs', 'kmerlength', 'minkmerlength', 'maxkmernum' ,'batchsize', 'xmx')
 listDefaults = ('GBS2LK_', '10', '0', '64', '20', '50000000', '8', '10G')
 for (f, d) in zip(listFields, listDefaults):
-	cfgValues[f] = get_value_or_default(f, d)
+	tasselValues[f] = get_value_or_default(f, d)
 
-print("\nValues for the pipeline: ")
-for keys,values in cfgValues.items():
-	print(str(keys) + ": " + str(values))
-print("\n")
+
+#----------------------
+# bowtie2 Configuration
+#----------------------
+bowtie2Values = {}
+bowtie2Config = configParser['bowtie2']
+
+bowtie2Values['bowtie2path'] = bowtie2Config.get('bowtie2path', None)
+check_dir(bowtie2Values['bowtie2path'], "bowtie2path")
+
+# Use biopython to check if fasta ? 
+bowtie2Values['reference'] = bowtie2Config.get('reference', None)
+check_file(bowtie2Values['reference'], "bowtie2 reference")
+
+#----------------------
+# global Configuration
+#----------------------
+globalValues = {}
+globalConfig = configParser['global']
+
+globalValues['nbthreads'] = globalConfig.get('nbThreads', 1)
+
+print("Done !")
+
+#----------------------
+# Summary of values 
+#----------------------
+print("\n=============================================")
+print("Summary of the values for the pipeline: ")
+print("=============================================")
+print("-tassel")
+for keys,values in tasselValues.items():
+	print("\t" + str(keys) + ": " + str(values))
+
+print("-bowtie2")
+for keys,values in bowtie2Values.items():
+	print("\t" + str(keys) + ": " + str(values))
 	
+print("-global")
+for keys,values in globalValues.items():
+	print("\t" + str(keys) + ": " + str(values))
+
 # ===============================================================
 # 					Launching the pipeline
 # ===============================================================
+print("\n=============================================")
+print("Starting the pipeline: ")
+print("=============================================\n")
 if runMode == "PIPELINE":
-	run_tassel.run_pipeline(cfgValues, tasselPath, bowtie2Path)
+	tassel_pipeline.run_tassel(tasselValues, bowtie2Values, globalValues)
+	#MSTMap_pipeline()
 elif runMode == "TASSEL":
-	print("placeholder tassel")
+	tassel_pipeline.run_tassel(tasselValues, bowtie2Values, globalValues)
 else:
 	print("Error ! runMode: %s not valid !" % runMode)
