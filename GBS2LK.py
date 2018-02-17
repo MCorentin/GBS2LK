@@ -118,8 +118,8 @@ check_file(tasselValues['keyfile'], "keyfile")
 tasselValues['enzyme'] = tasselConfig.get('enzyme', None)
 
 # Deal with all the optional fields in the config file
-listFields = ('prefix', 'minkmercount', 'minqs', 'kmerlength', 'minkmerlength', 'maxkmernum' ,'batchsize', 'xmx')
-listDefaults = ('GBS2LK_', '10', '0', '64', '20', '50000000', '8', '10G')
+listFields = ('prefix', 'minkmercount', 'minqs', 'kmerlength', 'minkmerlength', 'maxkmernum' ,'batchsize')
+listDefaults = ('GBS2LK_', '10', '0', '64', '20', '50000000', '8')
 for (f, d) in zip(listFields, listDefaults):
 	tasselValues[f] = get_value_or_default(f, d)
 
@@ -143,7 +143,8 @@ check_file(bowtie2Values['reference'], "bowtie2 reference")
 globalValues = {}
 globalConfig = configParser['global']
 
-globalValues['nbthreads'] = globalConfig.get('nbThreads', 1)
+globalValues['nbthreads'] = globalConfig.get('nbThreads', '1')
+globalValues['mem'] = globalConfig.get('mem', '10')
 
 print("Done !")
 
