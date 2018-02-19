@@ -4,6 +4,7 @@ import configparser
 import sys
 import argparse
 import os
+import errno
 
 import tassel_pipeline
 
@@ -43,7 +44,7 @@ def get_value_or_default(fieldName, default):
 		print("No %s found, defaulting to '%s' ..." % (fieldName, default))
 	return value
 
-	
+
 # ===============================================================
 # 					Parsing the arguments
 # ===============================================================
@@ -111,15 +112,24 @@ check_file(tasselValues['tasselpath'], "run_pipeline.pl")
 tasselValues['inputdir'] = tasselConfig.get('inputdir', None)
 check_dir(tasselValues['inputdir'], "inputdir")
 
+tasselValues['outputdir'] = tasselConfig.get('outputdir', None)
+check_dir(tasselValues['outputdir'], "outputdir")
+
 tasselValues['keyfile'] = tasselConfig.get('keyfile', None)
 check_file(tasselValues['keyfile'], "keyfile")
 
 # Check list of enzymes ? (what if new one appear ?)
 tasselValues['enzyme'] = tasselConfig.get('enzyme', None)
 
+# check if taxa file exists, else put to null and perform "SNPQualityProfilerPlugin" on all taxa
+tasselValues['taxafile'] = tasselConfig.get('taxafile', None)
+if tasselValues['taxafile'] is not None:
+	check_file(tasselValues['taxafile'], 'taxafile')
+
+	
 # Deal with all the optional fields in the config file
-listFields = ('prefix', 'minkmercount', 'minqs', 'kmerlength', 'minkmerlength', 'maxkmernum' ,'batchsize')
-listDefaults = ('GBS2LK_', '10', '0', '64', '20', '50000000', '8')
+listFields = ('prefix', 'minkmercount', 'minqs', 'kmerlength', 'minkmerlength', 'maxkmernum' ,'batchsize', 'maxtagscutsite', 'mnlcov', 'mnmaf', 'alen', 'aprop', 'minmapq')
+listDefaults = ('GBS2LK_', '10', '0', '64', '20', '50000000', '8', '64', '0.1', '0.01', '0', '0', '0')
 for (f, d) in zip(listFields, listDefaults):
 	tasselValues[f] = get_value_or_default(f, d)
 
@@ -161,7 +171,7 @@ for keys,values in tasselValues.items():
 print("-bowtie2")
 for keys,values in bowtie2Values.items():
 	print("\t" + str(keys) + ": " + str(values))
-	
+
 print("-global")
 for keys,values in globalValues.items():
 	print("\t" + str(keys) + ": " + str(values))
@@ -172,6 +182,14 @@ for keys,values in globalValues.items():
 print("\n=============================================")
 print("Starting the pipeline: ")
 print("=============================================\n")
+
+print("cd to " + tasselValues['outputdir'] + "\n\n")
+try:
+	os.chdir(tasselValues['outputdir'])
+except OSError as err:
+	print("Cannot change directory to " + tasselValues['outputDir'] + "\nError: " + "OS error: {0}".format(err))
+	sys.exit()
+
 if runMode == "PIPELINE":
 	tassel_pipeline.run_tassel(tasselValues, bowtie2Values, globalValues)
 	#MSTMap_pipeline()
