@@ -108,7 +108,7 @@ def run_bowtie(tasselValues, bowtie2Values, globalValues):
 	cmdIndex = bowtie2Values['bowtie2path'] + "/bowtie2-build " + bowtie2Values['reference'] + " " + indexName
 	run_cmd(cmdIndex)
 
-	cmdAlign = bowtie2Values['bowtie2path'] + \
+	cmdAlign = bowtie2Values['bowtie2path']+"/bowtie2 " + \
 		  " -p " + globalValues['nbthreads'] + \
 		  " --very-sensitive " + \
 		  " -x " + indexName + \
