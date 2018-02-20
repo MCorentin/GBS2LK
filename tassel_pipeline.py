@@ -7,6 +7,7 @@ import shlex
 # Comments explaining each steps are coming from tassel bitbucket:
 # https://bitbucket.org/tasseladmin/tassel-5-source/wiki/Tassel5GBSv2Pipeline/
 
+# To add: log file to store errors and output
 
 # Pipeline from GBS to SNPs discovery
 def run_tassel(tasselValues, bowtie2Values, globalValues):
@@ -15,12 +16,15 @@ def run_tassel(tasselValues, bowtie2Values, globalValues):
 	global SAM_NAME
 	global QUAL_SCORE_NAME
 	global JAVA_MEM
+	global VCF_OUTPUT_NAME
+	
 	# Determine file names
 	DB_NAME = tasselValues['prefix']+"_Tags.db"
 	FASTQ_NAME = tasselValues['prefix']+"_Tags.fastq.gz"
 	SAM_NAME = tasselValues['prefix']+"_TagsAligned.sam"
 	QUAL_SCORE_NAME = tasselValues['prefix']+"_QualityScores.tsv"
 	JAVA_MEM = "-Xmx" + globalValues['mem'] +"g"
+	VCF_OUTPUT_NAME = tasselValues['prefix']+".vcf"
 
 	# Tassel pipeline - from GBS to hapmap
 	run_GBSSeqToTagDBPlugin(tasselValues)
@@ -28,11 +32,14 @@ def run_tassel(tasselValues, bowtie2Values, globalValues):
 	run_bowtie(tasselValues, bowtie2Values, globalValues)
 	run_SAMToGBSdbPlugin(tasselValues)
 	run_DiscoverySNPCallerPluginV2(tasselValues, bowtie2Values)
-	# /!\ add possibility to run only on subset of individuals for run_QualityProfilerPlugin
 	run_SNPQualityProfilerPlugin(tasselValues)
 	run_UpdateSNPPositionQualityPlugin(tasselValues)
 	run_ProductionSNPCallerPluginV2(tasselValues, globalValues)
 
+	print("The pipeline is finished.\n")
+	print("The database is stored in " + DB_NAME + "\n")
+	print("The output file is " + VCF_OUTPUT_NAME + "\n")
+	
 
 def run_cmd(cmd):
 	print("==> Running:\n" + cmd + "\n\n")
@@ -42,6 +49,9 @@ def run_cmd(cmd):
 	
 	if p.returncode != 0:
 		print("command failed: %d %s %s" % (p.returncode, output, error))
+		print("The pipeline stops here")
+		sys.exit()
+		
 
 
 		
@@ -63,18 +73,6 @@ def run_GBSSeqToTagDBPlugin(tasselValues):
 		  " -mxKmerNum " + tasselValues['maxkmernum'] + \
 		  " -batchSize " + tasselValues['batchsize'] + \
 		  " -deleteOldData true -endPlugin"
-	# cmd = ["perl", tasselValues['tasselpath']+"/run_pipeline.pl", JAVA_MEM, "-GBSSeqToTagDBPlugin",
-		  # "-e", tasselValues['enzyme'],
-		  # "-i", tasselValues['inputdir'],
-		  # "-db", DB_NAME,
-		  # "-k", tasselValues['keyfile'],
-		  # "-c", tasselValues['minkmercount'],
-		  # "-kmerLength", tasselValues['kmerlength'],
-		  # "-minKmerL", tasselValues["minkmerlength"],
-		  # "-mnQS", tasselValues['minqs'],
-		  # "-mxKmerNum", tasselValues['maxkmernum'],
-		  # "-batchSize", tasselValues['batchsize'],
-		  # "-deleteOldData", "true", "-endPlugin"]
 	
 	run_cmd(cmd)
 
@@ -174,6 +172,7 @@ def run_SNPQualityProfilerPlugin(tasselValues):
 	cmd = cmd + " -deleteOldData true -endPlugin"
 	run_cmd(cmd)
 
+	
 # UpdateSNPPositionQualityPlugin reads a quality score file to obtain quality score data for positions stored in the snpposition table.
 # The quality score file is a user created file that supplies quality scores for SNP positions.
 # It is up to the user to determine what values should be associated with each SNP.
@@ -193,4 +192,21 @@ def run_UpdateSNPPositionQualityPlugin(tasselValues):
 # VCF is the default output. An HDF5 file may be requested by using the suffix '.h5' on the file used in the output file parameter.
 # Merging of samples to the same HDF5 output file may be accomplished by using the '-ko' option described below. 
 def run_ProductionSNPCallerPluginV2(tasselValues, globalValues):
-	cmd = "perl " + tasselValues['tasselpath'] + "/run_pipeline.pl "
+	global DB_NAME
+	global JAVA_MEM
+	global VCF_OUTPUT_NAME
+
+	cmd = "perl " + tasselValues['tasselpath'] + "/run_pipeline.pl " + JAVA_MEM + " - ProductionSNPCallerPluginV2 " + \
+		  " -batchSize " + tasselValues['batchsize'] + \
+		  " -db " + DB_NAME + \
+		  " -e " + tasselValues['enzyme'] + \
+		  " -d " + tasselValues['maxdivergence'] + \
+		  " -eR " + tasselValues['avseqerrorrate'] + \
+		  " -i " + tasselValues['inputdir'] + \
+		  " -k " + tasselValues['keyfile'] + \
+		  " -kmerLength " + tasselValues['kmerlength'] + \
+		  " -minPosQS " + tasselValues['minposqs'] + \
+		  " -mnQS " + tasselValues['minQS'] + \
+		  " -o " + VCF_OUTPUT_NAME + \
+		  " -endPlugin "
+	run_cmd(cmd)

@@ -126,10 +126,10 @@ tasselValues['taxafile'] = tasselConfig.get('taxafile', None)
 if tasselValues['taxafile'] is not None:
 	check_file(tasselValues['taxafile'], 'taxafile')
 
-	
+
 # Deal with all the optional fields in the config file
-listFields = ('prefix', 'minkmercount', 'minqs', 'kmerlength', 'minkmerlength', 'maxkmernum' ,'batchsize', 'maxtagscutsite', 'mnlcov', 'mnmaf', 'alen', 'aprop', 'minmapq')
-listDefaults = ('GBS2LK_', '10', '0', '64', '20', '50000000', '8', '64', '0.1', '0.01', '0', '0', '0')
+listFields = ('prefix', 'minkmercount', 'minqs', 'kmerlength', 'minkmerlength', 'maxkmernum' ,'batchsize', 'maxtagscutsite', 'mnlcov', 'mnmaf', 'alen', 'aprop', 'minmapq', 'maxdivergence', 'avseqerrorrate', 'minposqs')
+listDefaults = ('GBS2LK_', '10', '0', '64', '20', '50000000', '8', '64', '0.1', '0.01', '0', '0', '0', '0', '0.01', '0')
 for (f, d) in zip(listFields, listDefaults):
 	tasselValues[f] = get_value_or_default(f, d)
 
