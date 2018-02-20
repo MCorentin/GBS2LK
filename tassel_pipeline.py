@@ -2,6 +2,7 @@ import re
 import os
 from subprocess import Popen, PIPE
 import shlex
+import sys
 
 
 # Comments explaining each steps are coming from tassel bitbucket:
@@ -104,7 +105,7 @@ def run_bowtie(tasselValues, bowtie2Values, globalValues):
 	extensionPosition = fastaPattern.search(refName).start()
 	indexName = refName[0:extensionPosition]
 
-	cmdIndex = bowtie2Values['bowtie2path'] + "/bowtie2-build --threads " + globalValues['nbthreads'] + " " + bowtie2Values['reference'] + " " + indexName
+	cmdIndex = bowtie2Values['bowtie2path'] + "/bowtie2-build " + bowtie2Values['reference'] + " " + indexName
 	run_cmd(cmdIndex)
 
 	cmdAlign = bowtie2Values['bowtie2path'] + \
