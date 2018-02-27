@@ -44,6 +44,9 @@ def run_tassel(tasselValues, bowtie2Values, globalValues):
 
 def run_cmd(cmd):
 	print("==> Running:\n" + cmd + "\n\n")
+	# No need to specify the directory, because we should have cd to it before calling this module !
+	with open('GBS2LK_commands.log', 'a') as commandsLog:
+		commandsLog.write(cmd + "\n")
 
 	p = Popen(shlex.split(cmd), shell = False)
 	output, error = p.communicate()

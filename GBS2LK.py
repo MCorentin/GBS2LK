@@ -143,7 +143,7 @@ bowtie2Config = configParser['bowtie2']
 bowtie2Values['bowtie2path'] = bowtie2Config.get('bowtie2path', None)
 check_dir(bowtie2Values['bowtie2path'], "bowtie2path")
 
-# Use biopython to check if fasta ? 
+# Use biopython to check if fasta ?
 bowtie2Values['reference'] = bowtie2Config.get('reference', None)
 check_file(bowtie2Values['reference'], "bowtie2 reference")
 
@@ -159,22 +159,38 @@ globalValues['mem'] = globalConfig.get('mem', '10')
 print("Done !")
 
 #----------------------
-# Summary of values 
+# Summary of values
 #----------------------
-print("\n=============================================")
-print("Summary of the values for the pipeline: ")
-print("=============================================")
-print("-tassel")
+#print("\n=============================================")
+#print("Summary of the values for the pipeline: ")
+#print("=============================================")
+#print("-tassel")
+#for keys,values in tasselValues.items():
+#	print("\t" + str(keys) + ": " + str(values))
+
+#print("-bowtie2")
+#for keys,values in bowtie2Values.items():
+#	print("\t" + str(keys) + ": " + str(values))
+
+#print("-global")
+#for keys,values in globalValues.items():
+#	print("\t" + str(keys) + ": " + str(values))
+
+printValues = "\n=============================================\nSummary of the values for the pipeline:\n=============================================\n"
+printValues = printValues + "-tassel\n"
 for keys,values in tasselValues.items():
-	print("\t" + str(keys) + ": " + str(values))
-
-print("-bowtie2")
+        printValues = printValues + "\t" + str(keys) + ": " + str(values) + "\n"
+printValues = printValues + "-bowtie2\n"
 for keys,values in bowtie2Values.items():
-	print("\t" + str(keys) + ": " + str(values))
-
-print("-global")
+        printValues = printValues + "\t" + str(keys) + ": " + str(values) + "\n"
+printValues = printValues + "-global\n"
 for keys,values in globalValues.items():
-	print("\t" + str(keys) + ": " + str(values))
+        printValues = printValues + "\t" + str(keys) + ": " + str(values) + "\n"
+
+print(printValues)
+
+with open('GBS2LK_Values.summary', 'w') as summaryFile:
+	summaryFile.write(printValues)
 
 # ===============================================================
 # 					Launching the pipeline
@@ -197,3 +213,4 @@ elif runMode == "TASSEL":
 	tassel_pipeline.run_tassel(tasselValues, bowtie2Values, globalValues)
 else:
 	print("Error ! runMode: %s not valid !" % runMode)
+
