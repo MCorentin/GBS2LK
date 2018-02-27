@@ -199,7 +199,7 @@ def run_ProductionSNPCallerPluginV2(tasselValues, globalValues):
 	global JAVA_MEM
 	global VCF_OUTPUT_NAME
 
-	cmd = "perl " + tasselValues['tasselpath'] + "/run_pipeline.pl " + JAVA_MEM + " - ProductionSNPCallerPluginV2 " + \
+	cmd = "perl " + tasselValues['tasselpath'] + "/run_pipeline.pl " + JAVA_MEM + " -ProductionSNPCallerPluginV2 " + \
 		  " -batchSize " + tasselValues['batchsize'] + \
 		  " -db " + DB_NAME + \
 		  " -e " + tasselValues['enzyme'] + \
@@ -209,7 +209,7 @@ def run_ProductionSNPCallerPluginV2(tasselValues, globalValues):
 		  " -k " + tasselValues['keyfile'] + \
 		  " -kmerLength " + tasselValues['kmerlength'] + \
 		  " -minPosQS " + tasselValues['minposqs'] + \
-		  " -mnQS " + tasselValues['minQS'] + \
+		  " -mnQS " + tasselValues['minqs'] + \
 		  " -o " + VCF_OUTPUT_NAME + \
 		  " -endPlugin "
 	run_cmd(cmd)

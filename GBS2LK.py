@@ -161,21 +161,6 @@ print("Done !")
 #----------------------
 # Summary of values
 #----------------------
-#print("\n=============================================")
-#print("Summary of the values for the pipeline: ")
-#print("=============================================")
-#print("-tassel")
-#for keys,values in tasselValues.items():
-#	print("\t" + str(keys) + ": " + str(values))
-
-#print("-bowtie2")
-#for keys,values in bowtie2Values.items():
-#	print("\t" + str(keys) + ": " + str(values))
-
-#print("-global")
-#for keys,values in globalValues.items():
-#	print("\t" + str(keys) + ": " + str(values))
-
 printValues = "\n=============================================\nSummary of the values for the pipeline:\n=============================================\n"
 printValues = printValues + "-tassel\n"
 for keys,values in tasselValues.items():
