@@ -18,7 +18,7 @@ def run_tassel(tasselValues, bowtie2Values, globalValues):
 	global QUAL_SCORE_NAME
 	global JAVA_MEM
 	global VCF_OUTPUT_NAME
-	
+
 	# Determine file names
 	DB_NAME = tasselValues['prefix']+"_Tags.db"
 	FASTQ_NAME = tasselValues['prefix']+"_Tags.fastq.gz"
@@ -40,24 +40,23 @@ def run_tassel(tasselValues, bowtie2Values, globalValues):
 	print("The pipeline is finished.\n")
 	print("The database is stored in " + DB_NAME + "\n")
 	print("The output file is " + VCF_OUTPUT_NAME + "\n")
-	
+
 
 def run_cmd(cmd):
 	print("==> Running:\n" + cmd + "\n\n")
-	
+
 	p = Popen(shlex.split(cmd), shell = False)
 	output, error = p.communicate()
-	
+
 	if p.returncode != 0:
 		print("command failed: %d %s %s" % (p.returncode, output, error))
 		print("The pipeline stops here")
 		sys.exit()
-		
 
 
-		
+
 # GBSSeqToTagDBPlugin takes fastQ files as input (from input folder), identifies tags and the taxa in which they appear, and stores this data to a local database.
-# It keeps only good reads having a barcode and a cut site and no N in the useful part of the sequence. 
+# It keeps only good reads having a barcode and a cut site and no N in the useful part of the sequence.
 # It trims off the barcodes and truncates sequences that: (1) have a second cut site or (2) read into the common adapter.
 def run_GBSSeqToTagDBPlugin(tasselValues):
 	global DB_NAME
@@ -74,7 +73,7 @@ def run_GBSSeqToTagDBPlugin(tasselValues):
 		  " -mxKmerNum " + tasselValues['maxkmernum'] + \
 		  " -batchSize " + tasselValues['batchsize'] + \
 		  " -deleteOldData true -endPlugin"
-	
+
 	run_cmd(cmd)
 
 
@@ -124,7 +123,7 @@ def run_bowtie(tasselValues, bowtie2Values, globalValues):
 def run_SAMToGBSdbPlugin(tasselValues):
 	global SAM_NAME
 	global DB_NAME
-	
+
 	cmd = "perl " + tasselValues['tasselpath'] + "/run_pipeline.pl -SAMToGBSdbPlugin " + \
 		  " -aLen " + tasselValues['alen'] + \
 		  " -aProp " + tasselValues['aprop'] + \
@@ -141,7 +140,7 @@ def run_SAMToGBSdbPlugin(tasselValues):
 def run_DiscoverySNPCallerPluginV2(tasselValues, bowtie2Values):
 	global JAVA_MEM
 	global DB_NAME
-	
+
 	cmd = "perl " + tasselValues['tasselpath'] + "/run_pipeline.pl " + JAVA_MEM + " -DiscoverySNPCallerPluginV2 " + \
 		  " -db " + DB_NAME + \
 		  " -maxTagsCutSite " + tasselValues['maxtagscutsite'] + \
@@ -150,30 +149,30 @@ def run_DiscoverySNPCallerPluginV2(tasselValues, bowtie2Values):
 		  " -ref  " + bowtie2Values['reference'] + \
 		  " -deleteOldData true -endPlugin "
 	run_cmd(cmd)
-	
 
-	
+
+
 # This plugin scores all discovered SNPs for various coverage, depth and genotypic statistics for a given set of taxa. 
 # If no taxa are specified, the plugin will score all taxa currently stored in the data base.
 # If no taxa file is specified, the plugin uses the taxa stored in the database.
 def run_SNPQualityProfilerPlugin(tasselValues):
 	global DB_NAME
 	global QUAL_SCORE_NAME
-	
+
 	cmd = "perl " + tasselValues['tasselpath'] + "/run_pipeline.pl -SNPQualityProfilerPlugin " + \
 		  " -db " + DB_NAME + \
 		  " -statFile " + QUAL_SCORE_NAME
-	
+
 	# With taxa file : using only a subset of the taxas (if no taxa file : all the individuals are used, default)
 	# -tname is the name in the database of the run with the taxa specified in the taxafile: we use the basename(filename)
 	if tasselValues['taxafile'] is not None:
 		cmd = cmd + " -taxa " + tasselValues['taxafile'] + \
 			  " -tname " + os.path.basename(tasselValues['taxafile'])
-	
+
 	cmd = cmd + " -deleteOldData true -endPlugin"
 	run_cmd(cmd)
 
-	
+
 # UpdateSNPPositionQualityPlugin reads a quality score file to obtain quality score data for positions stored in the snpposition table.
 # The quality score file is a user created file that supplies quality scores for SNP positions.
 # It is up to the user to determine what values should be associated with each SNP.
@@ -181,13 +180,13 @@ def run_SNPQualityProfilerPlugin(tasselValues):
 def run_UpdateSNPPositionQualityPlugin(tasselValues):
 	global DB_NAME
 	global QUAL_SCORE_NAME
-	
+
 	cmd = "perl " + tasselValues['tasselpath'] + "/run_pipeline.pl -UpdateSNPPositionQualityPlugin " + \
 		  " -db " + DB_NAME + \
 		  " -qsFile " + QUAL_SCORE_NAME + \
-		  " -deleteOldData true -endPlugin"
+		  " -endPlugin"
 	run_cmd(cmd)
-	
+
 
 # This plugin converts data from fastq and keyfile to genotypes, then adds these to a genotype file in VCF or HDF5 format. 
 # VCF is the default output. An HDF5 file may be requested by using the suffix '.h5' on the file used in the output file parameter.
